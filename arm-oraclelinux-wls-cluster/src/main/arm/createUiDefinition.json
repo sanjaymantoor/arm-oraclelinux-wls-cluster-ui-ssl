@@ -148,11 +148,22 @@
                             "validationMessage": "Number of VMs to deploy, limit 5 since this offer is using a single storage account."
                         },
                         "visible": true
-                    }
+                    },
+					{
+                		"name": "guidValue",
+                		"type": "Microsoft.Common.TextBox",
+                		"label": "Unique ID",
+                		"defaultValue": "[substring(guid(),0,8)]",
+                		"toolTip": "Unique id which will be used for VM DNS configurations.",
+                		"constraints": {
+                            "required": true
+                         },
+                		"visible": true
+					}
                 ],
                 "visible": true
             },
-            {
+            {	
                 "name": "basicsOptional",
                 "type": "Microsoft.Common.Section",
                 "label": "Optional Basic Configuration",
@@ -350,7 +361,224 @@
             }            
         ],
         "steps": [
-{
+            {
+                "name": "section_dnsConfiguration",
+                "type": "Microsoft.Common.Section",
+                "label": "DNS Configuration",
+                "elements": [
+                    {
+                        "name": "dnsConfigurationText",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Selecting 'Yes' here will cause the template to provision Oracle WebLogic Server Administration Console and Application Gateway using a custom DNS Name (for example: applications.contoso.com)",
+                            "link": {
+                                "label": "Learn more",
+                                "uri": "https://aka.ms/arm-oraclelinux-wls-dns"
+                            }
+                        }
+                    },
+                    {
+                        "name": "enableCustomDNS",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "visible": true,
+                        "label": "Configure Custom DNS Alias?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' to configure Custom DNS Alias.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": true
+                                },
+                                {
+                                    "label": "No",
+                                    "value": false
+                                }
+                            ],
+                            "required": false
+                        }
+                    },
+                    {
+                        "name": "customDNSSettings",
+                        "type": "Microsoft.Common.Section",
+                        "label": "DNS Configuration Settings",
+                        "visible": "[bool(steps('section_dnsConfiguration').enableCustomDNS)]",
+                        "elements": [
+                            {
+                                "name": "bringDNSZone",
+                                "type": "Microsoft.Common.OptionsGroup",
+                                "label": "Use an existing Azure DNS Zone",
+                                "defaultValue": "No",
+                                "toolTip": "Select 'Yes' to configure Custom DNS Alias based on an existing Azure DNS Zone. Select 'No' to create an Azure DNS Zone and Custom DNS Alias.",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "Yes",
+                                            "value": true
+                                        },
+                                        {
+                                            "label": "No",
+                                            "value": false
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "createDNSZoneText",
+                                "type": "Microsoft.Common.InfoBox",
+                                "visible": "[not(bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]",
+                                "options": {
+                                    "icon": "Info",
+                                    "text": "You must perform DNS Domain Delegation at your DNS Registry after deployment.",
+                                    "uri": "https://aka.ms/dns-domain-delegation"
+                                }
+                            },
+                            {
+                                "name": "deplymentScriptInfo",
+                                "type": "Microsoft.Common.TextBlock",
+                                "options": {
+                                    "text": "If you choose to use an existing Azure DNS Zone, you must select a user-assigned managed identity to enable the necessary configuration."
+                                },
+                                "visible": "[steps('section_dnsConfiguration').customDNSSettings.bringDNSZone]"
+                            },
+                            {
+                                "name": "dnszoneName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "DNS Zone Name",
+                                "defaultValue": "",
+                                "toolTip": "Use only letters and numbers and periods to separate Domains",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^([0-9a-zA-Z_-]{1,63}\\.){1,33}[0-9a-zA-Z_-]{1,63}$",
+                                    "validationMessage": "There must be between 2 and 34 labels. For example, \"contoso.com\" has 2 labels. Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                }
+                            },
+                            {
+                                "name": "dnsZoneResourceGroup",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Name of the resource group contains the DNS Zone in current subscription",
+                                "defaultValue": "",
+                                "toolTip": "Name of the resource group which contains the DNS Zone in current subscription",
+                                "constraints": {
+                                    "required": true,
+                                    "regex": "^[a-z0-9A-Z.\\-_()]{0,89}([a-z0-9A-Z\\-_()]{1})$",
+                                    "validationMessage": "[if(greater(length(steps('section_dnsConfiguration').existingDNSZonesSettings.dnsZoneResourceGroup), 90),'Resource group names only allow up to 90 characters.', 'Resource group names only allow alphanumeric characters, periods, underscores, hyphens and parenthesis and cannot end in a period.')]"
+                                },
+                                "visible": "[steps('section_dnsConfiguration').customDNSSettings.bringDNSZone]"
+                            },
+                            {
+                                "name": "dnszoneAdminConsoleLabel",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Label for Oracle WebLogic Administration Console",
+                                "defaultValue": "admin",
+                                "toolTip": "Specify a label to generate subdomain of Oracle WebLogic Administration Console",
+                                "constraints": {
+                                    "required": true,
+                                    "validations": [
+                                        {
+                                            "regex": "^([0-9a-zA-Z_-]{1,63}\\.){0,33}[0-9a-zA-Z_-]{1,63}$",
+                                            "message": "Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                        },
+                                        {
+                                            "isValid": "[less(sub(length(concat(steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)),length(replace(concat(steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName), '.', ''))),34)]",
+                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"admin.contoso.com\" has 3 labels."
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "dnszoneGatewayLabel",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Label for Application Gateway",
+                                "defaultValue": "www",
+                                "toolTip": "Specify a label to generate subdomain of Application Gateway",
+                                "constraints": {
+                                    "required": true,
+                                    "validations": [
+                                        {
+                                            "regex": "^([0-9a-zA-Z_-]{1,63}\\.){0,33}[0-9a-zA-Z_-]{1,63}$",
+                                            "message": "Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                        },
+                                        {
+                                            "isValid": "[less(sub(length(concat(if(empty(steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel), '', steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel),'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)),length(replace(concat(if(empty(steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel), '', steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel),'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName), '.', ''))),34)]",
+                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"applications.contoso.com\" has 3 labels."
+                                        }
+                                    ]
+                                },
+                                "visible": "[and(bool(steps('section_appGateway').enableAppGateway), bool(steps('section_dnsConfiguration').enableCustomDNS))]"
+                            },
+                            {
+                                "name": "reuseIdentity",
+                                "type": "Microsoft.Common.OptionsGroup",
+                                "label": "Use the Managed Identity seleted previousely?",
+                                "defaultValue": "Yes",
+                                "toolTip": "Select 'Yes' to reuse the Managed Identity seleted previousely, 'No' to input a new identity.",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "Yes",
+                                            "value": true
+                                        },
+                                        {
+                                            "label": "No",
+                                            "value": false
+                                        }
+                                    ]
+                                },
+                                "visible": "[and(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
+                            },
+                            {
+                                "name": "infoDNSIndentity",
+                                "type": "Microsoft.Common.InfoBox",
+                                "visible": "[and(bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone), less(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),1), less(length(steps('section_dnsConfiguration').customDNSSettings.dnsIdentity.userAssignedIdentities), 1))]",
+                                "options": {
+                                    "icon": "Error",
+                                    "text": "This option will use Azure deployment scripts to update records to your Azure DNS Zone. You have to add at least one user-assigned identity to access Azure resources.",
+                                    "uri": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template"
+                                }
+                            },
+                            {
+                                "name": "dnsIdentity",
+                                "type": "Microsoft.ManagedIdentity.IdentitySelector",
+                                "label": "Managed Identity Configuration",
+                                "toolTip": {
+                                    "userAssignedIdentity": "Add user-assigned identities to grant the resource access to Azure resources."
+                                },
+                                "defaultValue": {
+                                    "systemAssignedIdentity": "Off"
+                                },
+                                "options": {
+                                    "hideSystemAssignedIdentity": true,
+                                    "hideUserAssignedIdentity": false
+                                },
+                                "visible": "[if(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0),and(equals(steps('section_dnsConfiguration').customDNSSettings.reuseIdentity, false), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
+                            },
+                            {
+                        		"name": "dns_adminVMDNS",
+                        		"type": "Microsoft.Common.InfoBox",
+                        		"visible": "[steps('section_dnsConfiguration').enableCustomDNS]",
+                        		"options": {
+                        			"icon": "Info",
+                        			"label": "WebLogic Admin VM DNS name",
+                        			"text": "[concat('Create certificate with dns zone based:<hr></hr>',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
+                        		}
+                            },
+							{
+                        		"name": "dns_ssl_adminVMDNS",
+                        		"type": "Microsoft.Common.InfoBox",
+                        		"visible": "[bool(steps('section_sslConfiguration').enableCustomSSL)]",
+                        		"options": {
+                        			"icon": "Info",
+                        			"label": "WebLogic Admin VM DNS name",
+                        			"text": "[concat('Create certificate with admin server:<hr></hr>',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location())]"
+                        		}
+                            }
+                        ]
+                    }
+                ]
+            },        
+			{
 				"name": "section_sslConfiguration",
 				"type": "Microsoft.Common.Section",
 				"label": "TLS/SSL Configuration",
@@ -383,6 +611,26 @@
 								}
 							],
 							"required": false
+						}
+					},
+					{
+						"name": "dns_adminVMDNS",
+						"type": "Microsoft.Common.InfoBox",
+						"visible": "[steps('section_dnsConfiguration').enableCustomDNS]",
+						"options": {
+						"icon": "Info",
+						"label": "WebLogic Admin VM DNS name",
+							"text": "[concat('Create certificate with dns zone based:<hr></hr>',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
+						}
+					},
+					{
+						"name": "dns_ssl_adminVMDNS",
+						"type": "Microsoft.Common.InfoBox",
+						"visible": "[bool(steps('section_sslConfiguration').enableCustomSSL)]",
+						"options": {
+							"icon": "Info",
+							"label": "WebLogic Admin VM DNS name",
+							"text": "[concat('Create certificate with admin server:<hr></hr>',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location())]"
 						}
 					},
                     {
@@ -975,203 +1223,6 @@
                 "visible": true
             },
             {
-                "name": "section_dnsConfiguration",
-                "type": "Microsoft.Common.Section",
-                "label": "DNS Configuration",
-                "elements": [
-                    {
-                        "name": "dnsConfigurationText",
-                        "type": "Microsoft.Common.TextBlock",
-                        "visible": true,
-                        "options": {
-                            "text": "Selecting 'Yes' here will cause the template to provision Oracle WebLogic Server Administration Console and Application Gateway using a custom DNS Name (for example: applications.contoso.com)",
-                            "link": {
-                                "label": "Learn more",
-                                "uri": "https://aka.ms/arm-oraclelinux-wls-dns"
-                            }
-                        }
-                    },
-                    {
-                        "name": "enableCustomDNS",
-                        "type": "Microsoft.Common.OptionsGroup",
-                        "visible": true,
-                        "label": "Configure Custom DNS Alias?",
-                        "defaultValue": "No",
-                        "toolTip": "Select 'Yes' to configure Custom DNS Alias.",
-                        "constraints": {
-                            "allowedValues": [
-                                {
-                                    "label": "Yes",
-                                    "value": true
-                                },
-                                {
-                                    "label": "No",
-                                    "value": false
-                                }
-                            ],
-                            "required": false
-                        }
-                    },
-                    {
-                        "name": "customDNSSettings",
-                        "type": "Microsoft.Common.Section",
-                        "label": "DNS Configuration Settings",
-                        "visible": "[bool(steps('section_dnsConfiguration').enableCustomDNS)]",
-                        "elements": [
-                            {
-                                "name": "bringDNSZone",
-                                "type": "Microsoft.Common.OptionsGroup",
-                                "label": "Use an existing Azure DNS Zone",
-                                "defaultValue": "No",
-                                "toolTip": "Select 'Yes' to configure Custom DNS Alias based on an existing Azure DNS Zone. Select 'No' to create an Azure DNS Zone and Custom DNS Alias.",
-                                "constraints": {
-                                    "allowedValues": [
-                                        {
-                                            "label": "Yes",
-                                            "value": true
-                                        },
-                                        {
-                                            "label": "No",
-                                            "value": false
-                                        }
-                                    ]
-                                }
-                            },
-                            {
-                                "name": "createDNSZoneText",
-                                "type": "Microsoft.Common.InfoBox",
-                                "visible": "[not(bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]",
-                                "options": {
-                                    "icon": "Info",
-                                    "text": "You must perform DNS Domain Delegation at your DNS Registry after deployment.",
-                                    "uri": "https://aka.ms/dns-domain-delegation"
-                                }
-                            },
-                            {
-                                "name": "deplymentScriptInfo",
-                                "type": "Microsoft.Common.TextBlock",
-                                "options": {
-                                    "text": "If you choose to use an existing Azure DNS Zone, you must select a user-assigned managed identity to enable the necessary configuration."
-                                },
-                                "visible": "[steps('section_dnsConfiguration').customDNSSettings.bringDNSZone]"
-                            },
-                            {
-                                "name": "dnszoneName",
-                                "type": "Microsoft.Common.TextBox",
-                                "label": "DNS Zone Name",
-                                "defaultValue": "",
-                                "toolTip": "Use only letters and numbers and periods to separate Domains",
-                                "constraints": {
-                                    "required": true,
-                                    "regex": "^([0-9a-zA-Z_-]{1,63}\\.){1,33}[0-9a-zA-Z_-]{1,63}$",
-                                    "validationMessage": "There must be between 2 and 34 labels. For example, \"contoso.com\" has 2 labels. Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
-                                }
-                            },
-                            {
-                                "name": "dnsZoneResourceGroup",
-                                "type": "Microsoft.Common.TextBox",
-                                "label": "Name of the resource group contains the DNS Zone in current subscription",
-                                "defaultValue": "",
-                                "toolTip": "Name of the resource group which contains the DNS Zone in current subscription",
-                                "constraints": {
-                                    "required": true,
-                                    "regex": "^[a-z0-9A-Z.\\-_()]{0,89}([a-z0-9A-Z\\-_()]{1})$",
-                                    "validationMessage": "[if(greater(length(steps('section_dnsConfiguration').existingDNSZonesSettings.dnsZoneResourceGroup), 90),'Resource group names only allow up to 90 characters.', 'Resource group names only allow alphanumeric characters, periods, underscores, hyphens and parenthesis and cannot end in a period.')]"
-                                },
-                                "visible": "[steps('section_dnsConfiguration').customDNSSettings.bringDNSZone]"
-                            },
-                            {
-                                "name": "dnszoneAdminConsoleLabel",
-                                "type": "Microsoft.Common.TextBox",
-                                "label": "Label for Oracle WebLogic Administration Console",
-                                "defaultValue": "admin",
-                                "toolTip": "Specify a label to generate subdomain of Oracle WebLogic Administration Console",
-                                "constraints": {
-                                    "required": true,
-                                    "validations": [
-                                        {
-                                            "regex": "^([0-9a-zA-Z_-]{1,63}\\.){0,33}[0-9a-zA-Z_-]{1,63}$",
-                                            "message": "Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
-                                        },
-                                        {
-                                            "isValid": "[less(sub(length(concat(steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)),length(replace(concat(steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName), '.', ''))),34)]",
-                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"admin.contoso.com\" has 3 labels."
-                                        }
-                                    ]
-                                }
-                            },
-                            {
-                                "name": "dnszoneGatewayLabel",
-                                "type": "Microsoft.Common.TextBox",
-                                "label": "Label for Application Gateway",
-                                "defaultValue": "www",
-                                "toolTip": "Specify a label to generate subdomain of Application Gateway",
-                                "constraints": {
-                                    "required": true,
-                                    "validations": [
-                                        {
-                                            "regex": "^([0-9a-zA-Z_-]{1,63}\\.){0,33}[0-9a-zA-Z_-]{1,63}$",
-                                            "message": "Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
-                                        },
-                                        {
-                                            "isValid": "[less(sub(length(concat(if(empty(steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel), '', steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel),'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)),length(replace(concat(if(empty(steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel), '', steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel),'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName), '.', ''))),34)]",
-                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"applications.contoso.com\" has 3 labels."
-                                        }
-                                    ]
-                                },
-                                "visible": "[and(bool(steps('section_appGateway').enableAppGateway), bool(steps('section_dnsConfiguration').enableCustomDNS))]"
-                            },
-                            {
-                                "name": "reuseIdentity",
-                                "type": "Microsoft.Common.OptionsGroup",
-                                "label": "Use the Managed Identity seleted previousely?",
-                                "defaultValue": "Yes",
-                                "toolTip": "Select 'Yes' to reuse the Managed Identity seleted previousely, 'No' to input a new identity.",
-                                "constraints": {
-                                    "allowedValues": [
-                                        {
-                                            "label": "Yes",
-                                            "value": true
-                                        },
-                                        {
-                                            "label": "No",
-                                            "value": false
-                                        }
-                                    ]
-                                },
-                                "visible": "[and(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
-                            },
-                            {
-                                "name": "infoDNSIndentity",
-                                "type": "Microsoft.Common.InfoBox",
-                                "visible": "[and(bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone), less(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),1), less(length(steps('section_dnsConfiguration').customDNSSettings.dnsIdentity.userAssignedIdentities), 1))]",
-                                "options": {
-                                    "icon": "Error",
-                                    "text": "This option will use Azure deployment scripts to update records to your Azure DNS Zone. You have to add at least one user-assigned identity to access Azure resources.",
-                                    "uri": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template"
-                                }
-                            },
-                            {
-                                "name": "dnsIdentity",
-                                "type": "Microsoft.ManagedIdentity.IdentitySelector",
-                                "label": "Managed Identity Configuration",
-                                "toolTip": {
-                                    "userAssignedIdentity": "Add user-assigned identities to grant the resource access to Azure resources."
-                                },
-                                "defaultValue": {
-                                    "systemAssignedIdentity": "Off"
-                                },
-                                "options": {
-                                    "hideSystemAssignedIdentity": true,
-                                    "hideUserAssignedIdentity": false
-                                },
-                                "visible": "[if(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0),and(equals(steps('section_dnsConfiguration').customDNSSettings.reuseIdentity, false), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
                 "name": "section_database",
                 "type": "Microsoft.Common.Section",
                 "label": "Database",
@@ -1730,7 +1781,7 @@
                     }
                 ]
             }
-        ],
+        ],  
         "outputs": {
             "Location": "[location()]",
             "aadsPortNumber": "[steps('section_aad').aadInfo.aadsPortNumber]",
@@ -1809,7 +1860,8 @@
             "uploadedCustomTrustKeyStorePassPhrase": "[steps('section_sslConfiguration').uploadedCustomSSLSettings.uploadedCustomTrustKeyStorePassPhrase]",
             "uploadedCustomTrustKeyStoreType": "[steps('section_sslConfiguration').uploadedCustomSSLSettings.uploadedCustomTrustKeyStoreType]",
             "uploadedPrivateKeyAlias": "[steps('section_sslConfiguration').uploadedCustomSSLSettings.uploadedPrivateKeyAlias]",
-            "uploadedPrivateKeyPassPhrase": "[steps('section_sslConfiguration').uploadedCustomSSLSettings.uploadedPrivateKeyPassPhrase]"
+            "uploadedPrivateKeyPassPhrase": "[steps('section_sslConfiguration').uploadedCustomSSLSettings.uploadedPrivateKeyPassPhrase]",
+            "guidValue": "[basics('basicsRequired').guidValue]"
         }
     }
 }
