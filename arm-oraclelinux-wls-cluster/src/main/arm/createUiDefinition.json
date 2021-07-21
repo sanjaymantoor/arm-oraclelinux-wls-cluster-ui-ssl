@@ -557,7 +557,7 @@
                             {
                         		"name": "dns_adminVMDNS",
                         		"type": "Microsoft.Common.InfoBox",
-                        		"visible": "[steps('section_dnsConfiguration').enableCustomDNS]",
+                        		"visible": "[and(steps('section_dnsConfiguration').enableCustomDNS,not(steps('section_sslConfiguration').enableCustomSSL))]",
                         		"options": {
                         			"icon": "Info",
                         			"label": "WebLogic Admin VM DNS name",
@@ -567,11 +567,11 @@
 							{
                         		"name": "dns_ssl_adminVMDNS",
                         		"type": "Microsoft.Common.InfoBox",
-                        		"visible": "[bool(steps('section_sslConfiguration').enableCustomSSL)]",
+                        		"visible": "[and(steps('section_dnsConfiguration').enableCustomDNS,steps('section_sslConfiguration').enableCustomSSL)]",
                         		"options": {
                         			"icon": "Info",
                         			"label": "WebLogic Admin VM DNS name",
-                        			"text": "[concat('Create certificate with admin server:<hr></hr>',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location())]"
+                        			"text": "[concat('Create certificate either with one of the hostname:<hr></hr>','1)',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location(),'   2)',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
                         		}
                             }
                         ]
@@ -614,23 +614,23 @@
 						}
 					},
 					{
-						"name": "dns_adminVMDNS",
+						"name": "ssl_adminVMDNS",
 						"type": "Microsoft.Common.InfoBox",
-						"visible": "[steps('section_dnsConfiguration').enableCustomDNS]",
+						"visible": "[and(steps('section_sslConfiguration').enableCustomSSL,not(steps('section_dnsConfiguration').enableCustomDNS)]",
 						"options": {
 						"icon": "Info",
 						"label": "WebLogic Admin VM DNS name",
-							"text": "[concat('Create certificate with dns zone based:<hr></hr>',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
+						"text": "[concat('Create certificate either with one of the hostname:<hr></hr>',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location())]"
 						}
 					},
 					{
-						"name": "dns_ssl_adminVMDNS",
+						"name": "ssl_dns_adminVMDNS",
 						"type": "Microsoft.Common.InfoBox",
-						"visible": "[bool(steps('section_sslConfiguration').enableCustomSSL)]",
+						"visible": "[and(steps('section_dnsConfiguration').enableCustomDNS,steps('section_sslConfiguration').enableCustomSSL)]",
 						"options": {
 							"icon": "Info",
 							"label": "WebLogic Admin VM DNS name",
-							"text": "[concat('Create certificate with admin server:<hr></hr>',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location())]"
+							"text": "[concat('Create certificate either with one of the hostname:<hr></hr>','1)',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location(),'   2)',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
 						}
 					},
                     {
