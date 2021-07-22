@@ -561,7 +561,7 @@
                         		"options": {
                         			"icon": "Info",
                         			"label": "WebLogic Admin VM DNS name",
-                        			"text": "[concat('Create certificate with dns zone based:<hr></hr>',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
+                        			"text": "[concat('Create certificate with dns zone based: ',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
                         		}
                             },
 							{
@@ -571,7 +571,7 @@
                         		"options": {
                         			"icon": "Info",
                         			"label": "WebLogic Admin VM DNS name",
-                        			"text": "[concat('Create certificate either with one of the hostname:<hr></hr>','1)',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location(),'   2)',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
+                        			"text": "[concat('Create certificate either with one of the hostname: ','1)',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location(),'   2)',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
                         		}
                             }
                         ]
@@ -614,13 +614,22 @@
 						}
 					},
 					{
+						"name": "nonssl_adminVMDNS",
+						"type": "Microsoft.Common.InfoBox",
+						"visible": "[not(steps('section_sslConfiguration').enableCustomSSL)]",
+						"options": {
+						"icon": "Info",
+						"text": "WebLogic server makes use of DemoTrust certificates. This is not recommended for production purpose."
+						}
+					},
+					{
 						"name": "ssl_adminVMDNS",
 						"type": "Microsoft.Common.InfoBox",
-						"visible": "[and(steps('section_sslConfiguration').enableCustomSSL,not(steps('section_dnsConfiguration').enableCustomDNS)]",
+						"visible": "[and(steps('section_sslConfiguration').enableCustomSSL,not(steps('section_dnsConfiguration').enableCustomDNS))]",
 						"options": {
 						"icon": "Info",
 						"label": "WebLogic Admin VM DNS name",
-						"text": "[concat('Create certificate either with one of the hostname:<hr></hr>',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location())]"
+						"text": "[concat('Create certificate with the hostname: ',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location())]"
 						}
 					},
 					{
@@ -630,7 +639,7 @@
 						"options": {
 							"icon": "Info",
 							"label": "WebLogic Admin VM DNS name",
-							"text": "[concat('Create certificate either with one of the hostname:<hr></hr>','1)',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location(),'   2)',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
+							"text": "[concat('Create certificate either with one of the hostname: ','1)',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location(),'   2)',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
 						}
 					},
                     {
