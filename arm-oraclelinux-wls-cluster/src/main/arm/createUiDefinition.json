@@ -553,26 +553,6 @@
                                     "hideUserAssignedIdentity": false
                                 },
                                 "visible": "[if(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0),and(equals(steps('section_dnsConfiguration').customDNSSettings.reuseIdentity, false), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
-                            },
-                            {
-                        		"name": "dns_adminVMDNS",
-                        		"type": "Microsoft.Common.InfoBox",
-                        		"visible": "[and(steps('section_dnsConfiguration').enableCustomDNS,not(steps('section_sslConfiguration').enableCustomSSL))]",
-                        		"options": {
-                        			"icon": "Info",
-                        			"label": "WebLogic Admin VM DNS name",
-                        			"text": "[concat('Create certificate with dns zone based: ',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
-                        		}
-                            },
-							{
-                        		"name": "dns_ssl_adminVMDNS",
-                        		"type": "Microsoft.Common.InfoBox",
-                        		"visible": "[and(steps('section_dnsConfiguration').enableCustomDNS,steps('section_sslConfiguration').enableCustomSSL)]",
-                        		"options": {
-                        			"icon": "Info",
-                        			"label": "WebLogic Admin VM DNS name",
-                        			"text": "[concat('Create certificate either with one of the hostname: ','1)',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location(),'   2)',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
-                        		}
                             }
                         ]
                     }
@@ -639,7 +619,7 @@
 						"options": {
 							"icon": "Info",
 							"label": "WebLogic Admin VM DNS name",
-							"text": "[concat('Create certificate either with one of the hostname: ','1)',if(empty(basics('basicsOptional').dnsLabelPrefix),'wls',toLower(basics('basicsOptional').dnsLabelPrefix)),'0-',basics('basicsRequired').guidValue,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location(),'   2)',steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
+							"text": "[concat('Create certificate with DNS Zone: ', steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
 						}
 					},
                     {
@@ -1048,7 +1028,7 @@
                         "type": "Microsoft.Common.TextBlock",
                         "visible": "[steps('section_appGateway').enableAppGateway]",
                         "options": {
-                            "text": "    ⁃ Upload a TLS/SSL certificate: Upload the pre-signed certificate now."
+                            "text": "    ⁃ Upload a TLS/SSL certificate: Upload the pre-signed certificate now."
                         }
                     },
                     {
@@ -1056,7 +1036,7 @@
                         "type": "Microsoft.Common.TextBlock",
                         "visible": "[steps('section_appGateway').enableAppGateway]",
                         "options": {
-                            "text": "    ⁃ Identify an Azure Key Vault: The Key Vault must already contain the certificate and its password stored as secrets."
+                            "text": "    ⁃ Identify an Azure Key Vault: The Key Vault must already contain the certificate and its password stored as secrets."
                         }
                     },
                     {
@@ -1064,7 +1044,7 @@
                         "type": "Microsoft.Common.TextBlock",
                         "visible": "[steps('section_appGateway').enableAppGateway]",
                         "options": {
-                            "text": "    ⁃ Generate a self-signed certificate: generate a self-signed certificate and apply it during deployment.",
+                            "text": "    ⁃ Generate a self-signed certificate: generate a self-signed certificate and apply it during deployment.",
                             "link": {
                                 "label": "Learn more",
                                 "uri": "https://aka.ms/arm-oraclelinux-wls-cluster-app-gateway-key-vault"
