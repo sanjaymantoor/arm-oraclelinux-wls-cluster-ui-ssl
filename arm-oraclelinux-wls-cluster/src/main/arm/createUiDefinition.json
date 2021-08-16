@@ -1015,7 +1015,27 @@
                             "required": false
                         }
                     },
-                    {
+		    {
+			"name": "ssl_agDNS",
+			"type": "Microsoft.Common.InfoBox",
+			"visible": "[and(steps('section_appGateway').enableAppGateway,not(steps('section_dnsConfiguration').enableCustomDNS))]",
+			"options": {
+			   "icon": "Info",
+			   "label": "WebLogic Admin VM DNS name",
+			    "text": "[concat('Create certificate with the hostname: ','wlsgw',basics('basicsRequired').guidValue,'-',resourceGroup().name,'-',if(empty(basics('basicsOptional').wlsDomainName),'wlsd',toLower(basics('basicsOptional').wlsDomainName)),'.',location()'.cloudapp.azure.com')]"
+			}
+		    },
+		   {
+			"name": "ssl_dns_agDNS",
+			"type": "Microsoft.Common.InfoBox",
+			"visible": "[and(steps('section_dnsConfiguration').enableCustomDNS,steps('section_appGateway').enableAppGateway)]",
+			"options": {
+		  	    "icon": "Info",
+			    "label": "Appliction Gateway DNS",
+			     "text": "[concat('Create certificate with DNS Zone: ', steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)]"
+			}
+		    },					
+                   {
                         "name": "keyVaultText00",
                         "type": "Microsoft.Common.TextBlock",
                         "visible": "[steps('section_appGateway').enableAppGateway]",
