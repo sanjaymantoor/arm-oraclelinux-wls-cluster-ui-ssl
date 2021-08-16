@@ -5,3 +5,6 @@ used for the implementation of WebLogic Server (with N-Node Cluster) on Microsof
 
 For more comprehensive documentation, please refer to the README documentation available at <br>
 [https://github.com/wls-eng/arm-oraclelinux-wls](https://github.com/wls-eng/arm-oraclelinux-wls)
+
+
+This repository is temporary for working on UI definition changes for DNS Configurations, TLS/SSL configuration and Application Gateway.
