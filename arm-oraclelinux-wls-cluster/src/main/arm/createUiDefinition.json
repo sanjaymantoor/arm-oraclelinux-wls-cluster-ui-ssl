@@ -599,7 +599,8 @@
 						"visible": "[not(steps('section_sslConfiguration').enableCustomSSL)]",
 						"options": {
 						"icon": "Info",
-						"text": "WebLogic server makes use of DemoTrust certificates. This is not recommended for production purpose."
+						"text": "<div class="alert alert-info"><strong>Info!</strong>WebLogic server makes use of DemoTrust certificates. This is not recommended for production purpose.</div>"
+						"uri": "https://docs.oracle.com/en/middleware/standalone/weblogic-server/wlazu/configure-keystores.html#GUID-B8E99D35-637A-4753-81C3-3CAC6C010EA0"
 						}
 					},
 					{
