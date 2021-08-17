@@ -594,8 +594,7 @@
 						}
 					},
 					{
-						"name": "
-						",
+						"name": "nonssl_adminVMDNS",
 						"type": "Microsoft.Common.InfoBox",
 						"visible": "[not(steps('section_sslConfiguration').enableCustomSSL)]",
 						"options": {
