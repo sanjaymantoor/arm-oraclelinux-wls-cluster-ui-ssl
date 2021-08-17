@@ -594,12 +594,13 @@
 						}
 					},
 					{
-						"name": "nonssl_adminVMDNS",
+						"name": "
+						",
 						"type": "Microsoft.Common.InfoBox",
 						"visible": "[not(steps('section_sslConfiguration').enableCustomSSL)]",
 						"options": {
 						"icon": "Info",
-						"text": "<div class="alert alert-info"><strong>Info!</strong>WebLogic server makes use of DemoTrust certificates. This is not recommended for production purpose.</div>"
+						"text": "WebLogic server makes use of DemoTrust certificates. This is not recommended for production purpose.",
 						"uri": "https://docs.oracle.com/en/middleware/standalone/weblogic-server/wlazu/configure-keystores.html#GUID-B8E99D35-637A-4753-81C3-3CAC6C010EA0"
 						}
 					},
